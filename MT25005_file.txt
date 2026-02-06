@@ -1,0 +1,58 @@
+Here are the detailed explanations to clear up those final points of confusion.
+1) Why do we need 10.0.0.1?
+
+In a standard network, your computer has an IP address like 192.168.1.5. However, when we create Namespaces, we are creating "Private Islands" that are disconnected from your main computer's network.
+
+    Significance: 10.0.0.1 is the address we manually assigned to the Server's end of the virtual cable. It acts as the specific "Phone Number" for the server inside its private room.
+
+    What if we didn't write it? If you used 127.0.0.1 (localhost), the Client would try to find a server running in its own room. Since the Server is in a different namespace, the Client would find nothing and give you a "Connection Refused" error.
+
+    The Bridge: By using 10.0.0.1, the Client knows to send data out through the virtual cable (veth_c) to reach the other end (veth_s) where the Server is listening.
+
+2) The Bash Script and Namespaces
+
+A Namespace is a "Virtual Partition." Imagine your Linux OS is a house; a namespace is a soundproof room you built inside that house with its own separate plumbing and wiring.
+
+Line-by-line of setup_network.sh:
+
+    sudo ip netns add ns_server: Creates a room named "ns_server".
+
+    sudo ip netns add ns_client: Creates a room named "ns_client".
+
+    sudo ip link add veth_s type veth peer name veth_c: Creates a virtual ethernet cable with two ends: veth_s (server end) and veth_c (client end).
+
+    sudo ip link set veth_s netns ns_server: Plugs the veth_s end into the server room.
+
+    sudo ip link set veth_c netns ns_client: Plugs the veth_c end into the client room.
+
+    sudo ip netns exec ns_server ip addr add 10.0.0.1/24 dev veth_s: Sets the Server's IP address to 10.0.0.1.
+
+    sudo ip netns exec ns_client ip addr add 10.0.0.2/24 dev veth_c: Sets the Client's IP address to 10.0.0.2.
+
+    sudo ip netns exec ns_server ip link set veth_s up: "Turns on" the cable in the server room so data can flow.
+
+3) End-to-End Data Flow & The "2.5 GB" Result
+The Flow:
+
+    Preparation: Server mallocs 8 heap boxes and fills them with data.
+
+    The Trigger: Client connects and starts a 10-second timer.
+
+    The Pump (Server): The Server thread enters a loop. It reads Box 1, sends it; reads Box 2, sends it... all the way to Box 8. Then it immediately restarts at Box 1.
+
+    The Pipe (Network): The data travels through the "Virtual Cable" between the namespaces.
+
+    The Drain (Client): The Client runs a loop as fast as possible, calling recv() to pull that data out of the pipe and into its own memory.
+
+    The Stop: When the Client's clock hits 10 seconds, it stops calling recv() and closes the connection. The Server's send() then fails, and it stops too.
+
+Why do we see ~2.5 GB of data?
+
+You might think, "I only sent 4096 bytes!" But remember: the Server is sending that 4096-byte message millions of times per second.
+
+    Speed: Modern CPUs and virtual networks are incredibly fast. They can transfer several hundred Megabytes per second.
+
+    Duration: If your server can push data at 250 MB/s, and you run the test for 10 seconds:
+    250 MB/s×10 seconds=2500 MB (or 2.5 GB)
+
+    The Goal: The total GB received is a measure of Throughput. In Part A2 and A3 (Zero-Copy), you should notice that the "Total GB" increases because the CPU is doing less "copying" work and can therefore "pump" the data faster!

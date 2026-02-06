@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     address.sin_port = htons(8080);
 
     bind(server_fd, (struct sockaddr *)&address, sizeof(address));
-    listen(server_fd, 2);
+    listen(server_fd, 1);
 
     printf("Server running in Mode %d. Listening on port 8080...\n", mode);
 
