@@ -1,6 +1,0 @@
-Connected. Running test...
-
---- Metrics ---
-Throughput: 2.3547 Gbps
-Latency:    3.48 us/msg
-Total Data: 2804.40 MB

@@ -1,0 +1,53 @@
+Roll Number: MT25005
+File Names
+
+    Part A: MT25005_PartA_bash.sh, MT25005_PartA_Server.sh, MT25005_PartA_Client.sh
+
+    Part B: MT25005_PartB_bash.sh, MT25005_PartB_Server.c, MT25005_PartB_Client.c
+
+    Part C: MT25005_PartC_bash.sh
+
+    Part D: MT25005_PartD_Plot.py
+
+    Build: Makefile
+
+How to Implement
+1. Compile the Source Code
+
+Run the make file to compile all C source files:
+Bash
+
+make
+
+2. Setup Environment
+
+Give execution permissions to the Part A bash script and run it:
+Bash
+
+chmod +x MT25005_PartA_bash.sh
+./MT25005_PartA_bash.sh
+
+3. Run Server and Client
+
+You will need to use multiple terminals:
+
+    Terminal 1 (Server): Execute the server in its namespace:
+    Bash
+
+    sudo ip netns exec ns_server ./ServerA 1 10
+
+    Terminal 2 (Client): Execute the client in its namespace:
+    Bash
+
+    sudo ip netns exec ns_client ./ClientA 4096 10
+
+4. Performance Profiling
+
+In Terminal 3, immediately after starting the server, run the perf tool to monitor the server's process. Replace Pid with the actual PID of the server (found using pidof ServerA):
+Bash
+
+sudo perf stat -e cycles,L1-dcache-load-misses,LLC-load-misses,context-switches -p Pid
+
+5. View Results
+
+The perf command will display the performance results automatically once the server process terminates.
